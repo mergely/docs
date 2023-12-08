@@ -1,0 +1,466 @@
+---
+title: API Reference
+
+language_tabs: # must be one of https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers
+  - shell
+  - ruby
+  - python
+  - javascript
+
+toc_footers:
+  - <a href='#'>Sign Up for a Developer Key</a>
+  - <a href='https://mergely.app/'>Documentation Powered by Mergely</a>
+
+includes:
+  - errors
+
+search: true
+
+code_clipboard: true
+
+meta:
+  - name: description
+    content: Documentation for the Mergely API
+---
+
+<% end_point = "https://mergely.app/api/v3/" %>
+<% ep = end_point %>
+<% token = "{token-should-replace-with-yours}" %>
+# Introduction
+
+Welcome to the Mergely API! You can use our API to access mergely API endpoints,
+which  you can submit tasks, get task results, either individually or in bulk.
+When a job is completed, it will be submitted to the web hook you specified.
+The biz type of a job can be speech2text, pic2text, translate, etc.
+We have examples in Shell, Ruby, Python, and JavaScript! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
+
+
+
+# Authentication
+
+
+Mergely uses API keys to allow access to the API. You can register a new Mergely API key at our [developer portal](http://example.com/developers).
+
+Mergely expects for the API key to be included in all API requests to the server in a header that looks like the following:
+
+`Authorization: Bearer <%= token %>`
+
+<aside class="notice">
+You must replace <code><%= token %>></code> with your personal API key.
+</aside>
+
+# Job definition
+
+
+## full definition
+
+<textarea rows=21 cols=60 disabled>
+{
+  "uuid":"xxx-xxxx-xxxx-xxxx",
+  "status":"finished",// (pending, running, finished, failed, killed)
+  "input_param":{
+    "file": "http://some.com/some.file"
+  },
+  "biz": "speech2text",
+  "result":{
+    "text":"..."
+  },
+  "web_hook":"http://some.com/some-callback",
+  "web_hook":"{'code':200}",
+  "model":"some-algo",//optional
+  "model_version":"some-version"//optional
+  "finished_at":"2023-12-08 07:10:19.06959163 +0000",
+  "reported_at":"2023-12-08 07:10:19.06959163 +0000",
+  "created_at":"2023-12-08 07:10:19.06959163 +0000",
+  "updated_at":"2023-12-08 07:10:19.06959163 +0000",
+}
+</textarea>
+
+
+## required fields when submit a job
+<textarea rows=8 cols=60 disabled>
+{
+  "input_param":{
+    "file": "http://some.com/some.file"
+  },
+  "biz": "speech2text"
+}
+</textarea>
+
+## accept fields when report job result
+<textarea rows=8 cols=60 disabled>
+{
+  "uuid":"xxx-xxxx-xxxx-xxxx",
+  "result":{
+    "text":"..."
+  },
+  "model":"some-algo",//optional
+  "model_version":"some-version"//optional
+}
+</textarea>
+
+
+# Submit new Jobs
+
+## Post job individually
+
+```ruby
+require 'rest-client'
+
+RestClient.post '<%= ep%>job/submit',
+  {
+    input_param:{
+      file:"http://example.com/example.mp3"
+    },
+    biz: "speech2text"
+  }.to_json,
+  headers:{
+    content_type: :json,
+    as: :json
+  }
+```
+
+```python
+import requests
+
+url = '<%= ep %>job/submit'
+headers = {
+    'Authorization': 'Bearer <%= token %>',
+    'Content-Type': 'Application/json',
+    'Accept': 'Application/json'
+}
+data = {
+    "job": {
+           "input_param":{
+                "file":"https://some.example.com/some.mp3"
+            },
+            "biz":"speech2text"
+    }
+}
+
+response = requests.post(url, headers=headers, json=data)
+
+print(response.status_code)
+print(response.text)
+```
+
+```shell
+curl "<%= ep %>job/submit" \
+  -H "Authorization: Bearer <%= token %>"
+  -H "Accept: Application/json" \
+  -H "Content-Type: Application/json" \
+-d '{
+    "job":{
+            "input_param":{
+                "file":"https://some.example.com/some.mp3"
+            },
+            "biz":"speech2text"
+        }
+  }'
+```
+
+```javascript
+fetch("<%= ep %>job/submit",{
+    method:"POST",
+    headers:{
+        "Authorization": "Bearer <%= token %>",
+        "Content-Type":"Application/json",
+        "Accept": "Application/json"
+    },
+    body:JSON.stringify({
+        job:
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some.mp3"
+            }
+        }
+    })
+}).then((resp)=>{ resp.json() }).then((data)=>{
+    console.log(data)
+})
+```
+
+
+
+This endpoint create new single job.
+
+### HTTP Request
+
+`POST <%= ep %>job/submit`
+
+### Query Parameters
+
+| Parameter | required | Default | Description
+|-----------|----------|-------------------| ----
+| job       | true     | not default value | the job structure.
+
+### The job object returned when created:
+
+<textarea rows=8 cols=60 disabled>
+  {
+    "input_param":{
+      "file":"https://some.example.com/some.mp3",
+    },
+    "biz":"speech2text"
+  }
+</textarea>
+
+
+<aside class="success">
+Remember — Don't forge to replace with your own <b>TOKEN</b>
+</aside>
+
+##  Post jobs in buck
+
+### HTTP Request
+
+`POST <%= ep %>job/submit/batch`
+
+### Post body
+
+Please submit jobs data as raw-body. You need to bring content-type:application/json and accept:application/json in the request header.
+<b>input_param['file']</b> and <b>biz</b> are required.
+
+<textarea rows=16 cols=60 disabled>
+{
+  jobs:[
+     {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some-1.mp3"
+            }
+    },
+     {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some-2.mp3"
+            }
+    }
+  ]
+}
+</textarea>
+
+
+```ruby
+payload =  {
+   jobs: [
+  { input_param:{file: 'http://all.oss.aliyuncs.com/1.zip'},biz:"speech2text" },
+  { input_param:{file: 'http://all.oss.aliyuncs.com/2.zip'},biz:"speech2text" }]
+}.to_json
+
+RestClient.post '<%= ep %>job/submit/batch',
+         payload,
+          {
+            authorization: "Bearer #{@token}" ,
+            content_type: :json,
+            as: :json
+        }
+```
+
+```python
+import requests
+
+url = '<%= ep %>job/submit/batch'
+headers = {
+    'Authorization': 'Bearer <%= token %>',
+    'Content-Type': 'Application/json',
+    'Accept': 'Application/json'
+}
+data = {
+    "jobs":[
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some.mp3"
+            }
+        },
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some-2.mp3"
+            }
+        }
+    ]
+}
+
+response = requests.post(url, headers=headers, json=data)
+
+print(response.status_code)
+print(response.text)
+```
+
+```shell
+curl "<%= ep %>job/submit/batch" \
+  -H "Authorization: Bearer <%= token %>" \
+  -H "Accept: Application/json" \
+  -H "Content-Type: Application/json" \
+-d '{
+    "jobs":[
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some.mp3"
+            }
+        },
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some-2.mp3"
+            }
+        }
+    ]
+}'
+```
+
+```javascript
+fetch("<%= ep %>job/submit/batch",{
+    method:"POST",
+    headers:{
+        "Authorization": "Bearer <%= token %>",
+        "Content-Type":"Application/json",
+        "Accept": "Application/json"
+    },
+    body:JSON.stringify({
+        jobs:[
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some.mp3"
+            }
+        },
+        {
+            "input_param":{
+                "biz":"speech2text",
+                "file":"https://some.example.com/some-2.mp3"
+            }
+        }
+    ]})
+})
+```
+
+> The above command returns JSON structured like this:
+
+```json
+{
+  "ok": true,
+  "data":[{
+    "uuid":"xxxx-xxx-xxx-xxxx",
+    "status":"pending"
+  },
+  {
+      "uuid":"xxxx-xxx-xxx-xxxx",
+      "status":"pending"
+  }
+  ]
+}
+```
+
+# Retrieve jobs
+## Retrieve job
+
+### HTTP Request
+`GET <%=ep %>query/job?uuid={uuid}`
+
+### Query parameter
+
+paramter | required | description
+--- | --- | ---
+uuid | false | uuid of the job
+
+```ruby
+require 'rest-client'
+RestClient.get '<%=ep %>query/job?uuid=' + the_uuid,{
+    authorization: "Bearer <%= token %>",
+   content_type: :json,
+   as: :json
+}
+```
+
+```python
+import requests
+url = "<%= ep %>query/job?id={some_uuid}"
+headers = {
+    'Authorization': 'Bearer <%= token %>',
+    'Content-Type': 'Application/json',
+    'Accept': 'Application/json'
+}
+response = requests.get(url,headers=headers)
+```
+
+```javascript
+fetch("<%=ep %>query/job?uuid={some_uuid}",{
+    headers:{
+        "Authorization": "Bearer <%= token %>",
+        "Content-Type":"Application/json",
+        "Accept": "Application/json"
+    }
+}).then((res)=>{ return res.json()}).then((data)=>{
+    console.log(data);
+})
+```
+```shell
+curl "<%= ep %>job/query?uuid={some_uuid}" \
+-H "Authorization: Bearer <%= token %>" \
+-H "Accept: Application/json" \
+-H "Content-Type: Application/json"
+```
+
+
+## Retrieve jobs in buck
+
+### HTTP Request
+
+### Query parameters
+
+parameter | required | example          | description
+--- |----------|------------------| ---
+status | false    | no default value | jobs with which status you wanner retrieve
+biz | false    | no default value | jobs with which biz model you wanner retrieve
+size | false    | 20               | pagesize of query
+page | false    | 0                | page number(starts at 0)
+
+<aside class="notice">
+The page parameter starts at 0.
+</aside>
+
+```ruby
+require 'rest-client'
+RestClient.get '<%=ep %>query/job/batch?biz=speech2text&status=pending&size=200&page=3',{
+    authorization: "Bearer <%= token %>",
+   content_type: :json,
+   as: :json
+}
+```
+
+```python
+import requests
+url = "<%= ep %>query/job/batch?biz=speech2text&status=pending&size=200&page=3"
+headers = {
+    'Authorization': 'Bearer <%= token %>',
+    'Content-Type': 'Application/json',
+    'Accept': 'Application/json'
+}
+response = requests.get(url,headers=headers)
+```
+
+```javascript
+fetch("<%=ep %>?uery/job/batch?biz=speech2text&status=pending&size=200&page=3",{
+    headers:{
+        "Authorization": "Bearer <%= token %>",
+        "Content-Type":"Application/json",
+        "Accept": "Application/json"
+    }
+}).then((res)=>{ return res.json()}).then((data)=>{
+    console.log(data);
+})
+```
+```shell
+curl "<%= ep %>job/query?query/job/batch?biz=speech2text&status=pending&size=200&page=3" \
+-H "Authorization: Bearer <%= token %>" \
+-H "Accept: Application/json" \
+-H "Content-Type: Application/json"
+```
+
+
+
